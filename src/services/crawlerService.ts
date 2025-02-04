@@ -1,29 +1,48 @@
-import FirecrawlApp from '@mendable/firecrawl-js';
-
-const API_KEY = import.meta.env.VITE_FIRECRAWL_API_KEY;
+import { AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode } from 'crawl4ai';
 
 export class CrawlerService {
-  private static instance: FirecrawlApp;
+  private static instance: AsyncWebCrawler;
 
-  private static getInstance(): FirecrawlApp {
+  private static async getInstance(): Promise<AsyncWebCrawler> {
     if (!this.instance) {
-      this.instance = new FirecrawlApp({ apiKey: API_KEY });
+      const browserConfig = new BrowserConfig({
+        headless: true,
+        viewport_width: 1280,
+        viewport_height: 720,
+        text_mode: true
+      });
+      
+      this.instance = new AsyncWebCrawler({ config: browserConfig });
     }
     return this.instance;
   }
 
   static async crawlWebsite(url: string, instructions: string) {
     try {
-      const crawler = this.getInstance();
-      const response = await crawler.crawlUrl(url, {
-        limit: 100,
-        instructions, // Moving instructions to the root level
-        scrapeOptions: {
-          formats: ['markdown', 'html', 'json']
-        }
+      const crawler = await this.getInstance();
+      
+      const runConfig = new CrawlerRunConfig({
+        word_count_threshold: 200,
+        cache_mode: CacheMode.ENABLED,
+        js_code: null,
+        wait_for: null,
+        screenshot: false,
+        enable_rate_limiting: true,
+        verbose: true,
+        stream: false
       });
 
-      return response;
+      const response = await crawler.arun(url, runConfig);
+
+      if (!response.success) {
+        throw new Error(response.error_message);
+      }
+
+      return {
+        markdown: response.markdown,
+        html: response.html,
+        data: response.extracted_content
+      };
     } catch (error) {
       console.error('Crawling error:', error);
       throw error;
