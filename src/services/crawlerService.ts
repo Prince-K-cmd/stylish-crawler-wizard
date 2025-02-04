@@ -19,7 +19,7 @@ export class CrawlerService {
         limit: 100,
         scrapeOptions: {
           formats: ['markdown', 'html', 'json'],
-          customInstructions: instructions
+          instructions // Using the standard 'instructions' property instead of 'customInstructions'
         }
       });
 
