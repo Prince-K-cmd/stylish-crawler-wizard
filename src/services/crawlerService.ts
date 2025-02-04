@@ -17,9 +17,9 @@ export class CrawlerService {
       const crawler = this.getInstance();
       const response = await crawler.crawlUrl(url, {
         limit: 100,
+        instructions, // Moving instructions to the root level
         scrapeOptions: {
-          formats: ['markdown', 'html', 'json'],
-          instructions // Using the standard 'instructions' property instead of 'customInstructions'
+          formats: ['markdown', 'html', 'json']
         }
       });
 
