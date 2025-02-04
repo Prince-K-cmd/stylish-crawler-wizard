@@ -18,7 +18,7 @@ export class CrawlerService {
       const response = await crawler.crawlUrl(url, {
         limit: 100,
         scrapeOptions: {
-          formats: ['markdown', 'html', 'csv'],
+          formats: ['markdown', 'html', 'json'],
           customInstructions: instructions
         }
       });
