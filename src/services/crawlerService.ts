@@ -1,47 +1,48 @@
-import { AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode } from 'crawl4ai';
+interface CrawlResponse {
+  success: boolean;
+  markdown?: string;
+  html?: string;
+  extracted_content?: any;
+  error_message?: string;
+}
 
 export class CrawlerService {
-  private static instance: AsyncWebCrawler;
-
-  private static async getInstance(): Promise<AsyncWebCrawler> {
-    if (!this.instance) {
-      const browserConfig = new BrowserConfig({
-        headless: true,
-        viewport_width: 1280,
-        viewport_height: 720,
-        text_mode: true
-      });
-      
-      this.instance = new AsyncWebCrawler({ config: browserConfig });
-    }
-    return this.instance;
-  }
+  private static API_URL = 'https://api.crawl4ai.com/v1'; // Replace with your actual API endpoint
 
   static async crawlWebsite(url: string, instructions: string) {
     try {
-      const crawler = await this.getInstance();
-      
-      const runConfig = new CrawlerRunConfig({
-        word_count_threshold: 200,
-        cache_mode: CacheMode.ENABLED,
-        js_code: null,
-        wait_for: null,
-        screenshot: false,
-        enable_rate_limiting: true,
-        verbose: true,
-        stream: false
+      const response = await fetch(`${this.API_URL}/crawl`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url,
+          instructions,
+          config: {
+            word_count_threshold: 200,
+            cache_mode: 'enabled',
+            enable_rate_limiting: true,
+            verbose: true,
+            stream: false
+          }
+        })
       });
 
-      const response = await crawler.arun(url, runConfig);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      if (!response.success) {
-        throw new Error(response.error_message);
+      const result: CrawlResponse = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error_message || 'Failed to crawl website');
       }
 
       return {
-        markdown: response.markdown,
-        html: response.html,
-        data: response.extracted_content
+        markdown: result.markdown,
+        html: result.html,
+        data: result.extracted_content
       };
     } catch (error) {
       console.error('Crawling error:', error);
